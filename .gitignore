@@ -1,0 +1,4 @@
+*.log
+*.py[co]
+*.TODO
+tz.md
