@@ -9,6 +9,9 @@ class BaseHandler(tornado.web.RequestHandler):
     """A class to collect common handler methods - all other handlers should
     subclass this one.
     """
+    def initialize(self, **kwargs):
+        super(BaseHandler, self).initialize(**kwargs)
+        self.db = self.settings['db']
 
     def render(self, template, context=None):
         """Renders template using jinja2"""
