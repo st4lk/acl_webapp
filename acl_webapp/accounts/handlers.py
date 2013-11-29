@@ -62,3 +62,12 @@ class RegisterHandler(BaseHandler):
 
         l.debug(self.context)
         self.render(self.template_name, self.context)
+
+
+class LogoutHandler(BaseHandler):
+    """Handler for logout url. Delete session and redirect to home page.
+    """
+
+    def get(self):
+        self.set_current_user(None)
+        self.redirect(self.reverse_url("home"))

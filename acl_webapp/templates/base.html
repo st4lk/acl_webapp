@@ -29,7 +29,7 @@
         </ul>
         <ul class="nav navbar-nav pull-right">
           {% if current_user %}
-            <li><a href="#">Exit</a></li>
+            <li><a href="{{ reverse_url('logout') }}">Logout</a></li>
           {% else %}
             <li><a href="#">Login</a></li>
             <li><a href="{{ reverse_url('register') }}">Register</a></li>
