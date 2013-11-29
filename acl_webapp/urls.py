@@ -1,6 +1,6 @@
 from tornado.web import url
 
-from handlers.pages import HomeHandler
+from pages.handlers import HomeHandler
 
 
 url_patterns = [
