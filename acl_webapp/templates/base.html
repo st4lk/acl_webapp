@@ -15,6 +15,7 @@
     {% block css %}
       <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
       <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+      <link rel="stylesheet" href="{{static_url('css/style.css')}}">
     {% endblock %}
   </head>
 
@@ -27,11 +28,11 @@
           <li class="active"><a href="{{ reverse_url('home') }}">ACL application</a></li>
         </ul>
         <ul class="nav navbar-nav pull-right">
-          {% if user %}
+          {% if current_user %}
             <li><a href="#">Exit</a></li>
           {% else %}
             <li><a href="#">Login</a></li>
-            <li><a href="#">Register</a></li>
+            <li><a href="{{ reverse_url('register') }}">Register</a></li>
           {% endif %}
         </ul>
       </div>

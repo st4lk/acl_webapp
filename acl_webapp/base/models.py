@@ -99,6 +99,3 @@ class BaseModel(Model):
             if not rl(field, None):
                 fields.append(field)
         return fields
-
-    def validate(self):
-        return self.validate()
