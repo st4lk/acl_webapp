@@ -1,3 +1,14 @@
 .auth_form {
     max-width: 400px;
 }
+
+.reg_btn_anim {
+    position: absolute;
+    top: 17px;
+    left: 30px;
+    opacity: 0.4;
+}
+
+.reg_post_anim {
+    margin-right: 10px;
+}

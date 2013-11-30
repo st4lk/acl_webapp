@@ -1,6 +1,7 @@
 (function($)  {
     'use strict'
 
+    var AJAX_LOADER_SMALL = "/static/img/loading_small.gif"
     var ERR_CLASSES = ["has-error"];
 
     // String.format method.
@@ -17,6 +18,11 @@
         };
     }
 
+    function ajax_amin_small(cls){
+        return $("<img class='{0}' src='{1}'/>".format(
+            cls, AJAX_LOADER_SMALL));
+    }
+
     function clearErr(frm){
         var frm_field_wrapper = frm.find('.form-group');
         for (var i=0; i<frm_field_wrapper.length; i++){
@@ -28,15 +34,20 @@
     }
 
     function showRequest(formData, jqForm, options) { 
-        // TODO show animation
+        // start animation
+        var loader_small = ajax_amin_small('reg_post_anim');
+        $(".modal-footer").prepend(loader_small);
+        $("#register_submit").attr('disabled', 'disabled');
         return true; 
     } 
 
 
     function showResponse(responseText, statusText, xhr, $form) {
-        // TODO stop animation
+        // stop animation
+        $('.reg_post_anim').remove();
+        $("#register_submit").removeAttr('disabled');
+        // process response
         var resp = responseText;
-        console.log(resp);
         var frm = $("#register_ajax_form");
         clearErr(frm);
         if (resp.result){
@@ -72,13 +83,13 @@
 
     $.fn.show_register_form = function(){
         // suggestion modal form
-        // var loader_small = $("<img class='ajax-loader-small pull-right get-msg-frm-loader' src='/static/img/loading_small.gif'/>");
+        var loader_small = ajax_amin_small('reg_btn_anim');
         return this.each(function(){
             $(this).click(function(){
                 var btn = $(this);
                 var modal_elem = $("#register_modal");
                 if (modal_elem.length == 0){
-                    // loader_small.insertAfter(btn);
+                    loader_small.insertAfter(btn);
                     btn.addClass('disabled');
                     $.get(btn.attr('href'), function(data){
                         $(data).appendTo('body');
@@ -86,7 +97,7 @@
                         modal_elem.ajax_register();
                         modal_elem.modal();
                         btn.removeClass('disabled');
-                        // loader_small.hide();
+                        loader_small.remove();
                     });
                 } else {
                     modal_elem.modal('toggle');
