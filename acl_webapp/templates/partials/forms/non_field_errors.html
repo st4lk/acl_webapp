@@ -1,0 +1,9 @@
+  {% if form.errors['whole_form'] %}
+    <div class="alert alert-block alert-danger">
+        <ul>
+            {% for err in form.errors['whole_form'] %}
+                <li>{{ err }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+  {% endif %}

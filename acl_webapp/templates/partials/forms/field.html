@@ -1,0 +1,7 @@
+  <div class="form-group{% if field.errors %} has-error{% endif %}">
+    {{ field.label(class="control-label requiredField") }}
+    {{ field(class="form-control", placeholder=placeholder) }}
+    {% for err in field.errors %}
+        <p class="help-block"><strong>{{ err }}</strong></p>
+    {% endfor %}
+  </div>

@@ -16,12 +16,7 @@
           {% with field = form.password, placeholder = "Password" %}
             {% include "partials/forms/field.html" %}
           {% endwith %}
-
-          {% with field = form.password2, placeholder = "Repeat password" %}
-            {% include "partials/forms/field.html" %}
-          {% endwith %}
-
-          <button type="submit" class="btn btn-success">Register</button>
+          <button type="submit" class="btn btn-success">Login</button>
         </form>
     </div>
 {% endblock content %}

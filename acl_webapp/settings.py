@@ -6,7 +6,8 @@ from tornado.options import define, options
 from jinja2 import Environment, FileSystemLoader
 
 # Make filepaths relative to settings.
-location = lambda x: os.path.join(os.path.dirname(os.path.realpath(__file__)), x)
+location = lambda x: os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), x)
 
 define("port", default=8888, help="run on the given port", type=int)
 define("config", default=None, help="tornado config file")
@@ -31,8 +32,12 @@ settings = {
 # for all options see http://jinja.pocoo.org/docs/api/#jinja2.Environment
 jinja_settings = {
     'autoescape': True,
+    'extensions': [
+        'jinja2.ext.with_'
+    ],
 }
-jinja_env = Environment(loader=FileSystemLoader(TEMPLATE_ROOT), **jinja_settings)
+jinja_env = Environment(loader=FileSystemLoader(TEMPLATE_ROOT),
+    **jinja_settings)
 
 # Mongo settings
 mongo_address = {
@@ -47,9 +52,6 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
-        },
         'main_formatter': {
             'format': '%(levelname)s:%(name)s: %(message)s '
             '(%(asctime)s; %(filename)s:%(lineno)d)',
