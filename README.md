@@ -13,12 +13,15 @@ Supports
 Installation
 ------------
 
-- install mognodb: [http://www.mongodb.org/downloads](http://www.mongodb.org/downloads)
+- install mognodb: [http://www.mongodb.org/downloads](http://www.mongodb.org/downloads) (tested on 2.4.8)
 - start mongod process
+- clone this repo
 - install dependencies:
     
     pip install -r requirements.txt
 
-- start local server:
+- start local server (`--debug=True` will cause debug mode):
 
     python app.py
+
+- access http://127.0.0.1:8888/
