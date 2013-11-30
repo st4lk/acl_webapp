@@ -6,7 +6,8 @@ from .hashers import check_password, make_password
 
 class UserModel(BaseModel):
     _id = EmailType(required=True)
-    password = StringType(required=True, min_length=6, max_length=50)
+    # _id = EmailType(required=True, serialized_name="email")
+    password = StringType(required=True, min_length=3, max_length=50)
     first_name = StringType()
     last_name = StringType()
 
@@ -19,6 +20,16 @@ class UserModel(BaseModel):
     @email.setter
     def email(self, value):
         self._id = value
+
+    @classmethod
+    def process_params(cls, params):
+        if 'email' in params:
+            params['_id'] = params.pop('email')
+        return params
+
+    @classmethod
+    def get_id_name(cls):
+        return 'email'
 
     def validate(self, *args, **kwargs):
         try:

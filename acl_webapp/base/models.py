@@ -30,8 +30,23 @@ class BaseModel(Model):
     _id = NumberType(number_class=ObjectId, number_type="ObjectId")
 
     @classmethod
+    def get_id_name(cls):
+        return '_id'
+
+    @classmethod
+    def process_params(cls, params):
+        """
+        Params can be modified here before actual providing to database.
+        """
+        return params
+
+    @classmethod
+    def get_collection(cls):
+        return getattr(cls, 'MONGO_COLLECTION', None)
+
+    @classmethod
     def check_collection(cls, collection):
-        return collection or getattr(cls, 'MONGO_COLLECTION', None)
+        return collection or cls.get_collection()
 
     @classmethod
     def find_list_len(cls):
@@ -46,19 +61,25 @@ class BaseModel(Model):
                 callback(*args, **kwargs)
             else:
                 callback(cls(result), error)
-
+        params = cls.process_params(dict(params))
         db[cls.check_collection(collection)].find_one(
             params, callback=wrap_callback)
 
     @classmethod
     def remove_entries(cls, db, params, collection=None, callback=None):
         c = cls.check_collection(collection)
+        params = cls.process_params(dict(params))
         db[c].remove(params, callback=callback)
 
     def save(self, db, collection=None, ser=None, callback=None, **kwargs):
         c = self.check_collection(collection)
         data = ser or self.to_primitive()
         db[c].save(data, callback=callback, **kwargs)
+
+    def insert(self, db, collection=None, ser=None, callback=None, **kwargs):
+        c = self.check_collection(collection)
+        data = ser or self.to_primitive()
+        db[c].insert(data, callback=callback, **kwargs)
 
     @gen.coroutine
     def update(self, db, collection=None, callback=None):

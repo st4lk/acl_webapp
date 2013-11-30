@@ -3,3 +3,5 @@ motor==0.1.2
 Jinja2==2.7.1
 schematics==0.9-3
 Django==1.5.5
+WTForms==1.0.5
+wtforms-tornado==0.0.1

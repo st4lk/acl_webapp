@@ -6,17 +6,40 @@
     <div class="auth_form">
         <form role="form" method="POST">
           {{ xsrf_form_html()|safe }}
-          <div class="form-group">
-            <label for="exampleInputEmail1">Email address</label>
-            <input type="email" name="email" class="form-control" id="exampleInputEmail1" placeholder="Enter email">
+
+          {% if form.errors['whole_form'] %}
+            <div class="alert alert-block alert-danger">
+                <ul>
+                    {% for err in form.errors['whole_form'] %}
+                        <li>{{ err }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+          {% endif %}
+
+
+          <div class="form-group{% if form.email.errors %} has-error{% endif %}">
+            {{ form.email.label(class="control-label requiredField") }}
+            {{ form.email(class="form-control", placeholder="Enter email") }}
+            {% for err in form.email.errors %}
+                <p class="help-block"><strong>{{ err }}</strong></p>
+            {% endfor %}
           </div>
-          <div class="form-group">
-            <label for="exampleInputPassword1">Password</label>
-            <input type="password" name="password1" class="form-control" id="exampleInputPassword1" placeholder="Password">
+
+          <div class="form-group{% if form.password.errors %} has-error{% endif %}">
+            {{ form.password.label(class="control-label requiredField") }}
+            {{ form.password(class="form-control", placeholder="Password") }}
+            {% for err in form.password.errors %}
+                <p class="help-block"><strong>{{ err }}</strong></p>
+            {% endfor %}
           </div>
-          <div class="form-group">
-            <label for="exampleInputPassword2">Repeat password</label>
-            <input type="password" name="password2" class="form-control" id="exampleInputPassword2" placeholder="Repeat password">
+
+          <div class="form-group{% if form.password2.errors %} has-error{% endif %}">
+            {{ form.password2.label(class="control-label requiredField") }}
+            {{ form.password2(class="form-control", placeholder="Repeat password") }}
+            {% for err in form.password2.errors %}
+                <p class="help-block"><strong>{{ err }}</strong></p>
+            {% endfor %}
           </div>
           <button type="submit" class="btn btn-success">Submit</button>
         </form>
