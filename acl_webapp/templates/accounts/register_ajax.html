@@ -4,9 +4,9 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title" id="myModalLabel">Modal able</h4>
+        <h4 class="modal-title" id="myModalLabel">Registration</h4>
       </div>
-    <form id="write_msg_form" action="{{ reverse_url('register') }}" method="post">
+    <form id="register_ajax_form" action="{{ reverse_url('register') }}" method="post">
       <div class="modal-body">
             {% include "accounts/partials/register_form.html" %}
       </div>

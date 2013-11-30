@@ -27,7 +27,7 @@ class RegisterHandler(BaseHandler, AuthMixin):
 
     def get(self):
         form = RegistrationForm()
-        if self.is_ajax():
+        if self.is_ajax:
             self.render(self.template_name_ajax, {'form': form})
         else:
             self.render(self.template_name, {'form': form})
@@ -44,9 +44,27 @@ class RegisterHandler(BaseHandler, AuthMixin):
                 form.set_field_error('email', 'email_occupied')
             else:
                 # user save succeeded
-                self.authenticate(usr)
+                self.set_current_user(usr.email)
+                self.post_success()
                 return
-        self.render(self.template_name, {"form": form})
+        self.post_failed(form)
+
+    def post_success(self):
+        redirect_url = self.reverse_url("home")
+        if self.is_ajax:
+            self.render_json({
+                "result": True,
+                "redirect_url": redirect_url,
+            })
+        else:
+            self.redirect(redirect_url)
+
+    def post_failed(self, form):
+        if self.is_ajax:
+            data = {"result": False, "errors": form.errors}
+            self.render_json(data)
+        else:
+            self.render(self.template_name, {"form": form})
 
 
 class LogoutHandler(BaseHandler):

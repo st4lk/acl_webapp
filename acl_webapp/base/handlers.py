@@ -1,5 +1,6 @@
 import logging
 import tornado.web
+import json
 from settings import jinja_env
 
 logger = logging.getLogger('edtr_logger')
@@ -29,9 +30,14 @@ class BaseHandler(tornado.web.RequestHandler):
         else:
             self.clear_cookie('user')
 
+    @property
     def is_ajax(self):
         request_x = self.request.headers.get('X-Requested-With')
         return request_x == 'XMLHttpRequest'
+
+    def render_json(self, data):
+        self.set_header("Content-Type", "application/json")
+        self.write(json.dumps(data))
 
     def get_current_user(self):
         expires = self.settings.get('cookie_expires', 31)
