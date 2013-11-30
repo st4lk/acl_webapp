@@ -23,10 +23,14 @@ class RegisterHandler(BaseHandler, AuthMixin):
     def initialize(self, **kwargs):
         super(RegisterHandler, self).initialize(**kwargs)
         self.template_name = "accounts/register.html"
+        self.template_name_ajax = "accounts/register_ajax.html"
 
     def get(self):
         form = RegistrationForm()
-        self.render(self.template_name, {'form': form})
+        if self.is_ajax():
+            self.render(self.template_name_ajax, {'form': form})
+        else:
+            self.render(self.template_name, {'form': form})
 
     @gen.coroutine
     def post(self):

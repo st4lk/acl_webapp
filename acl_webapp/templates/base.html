@@ -31,8 +31,8 @@
           {% if current_user %}
             <li><a href="{{ reverse_url('logout') }}">Logout</a></li>
           {% else %}
-            <li><a href="{{ reverse_url('login') }}">Login</a></li>
-            <li><a href="{{ reverse_url('register') }}">Register</a></li>
+            <li><a id="login_btn" href="{{ reverse_url('login') }}">Login</a></li>
+            <li><a id="register_btn" href="{{ reverse_url('register') }}">Register</a></li>
           {% endif %}
         </ul>
       </div>
@@ -46,14 +46,18 @@
 
     </div> <!-- /container -->
 
-    {% block modal %}{% endblock modal %}
-
     <!-- javascript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     {% block javascript %}
         <script src="http://code.jquery.com/jquery-latest.js"></script>
         <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+        <script src="http://malsup.github.com/jquery.form.js"></script>
+        <script src="{{static_url('js/scripts.js')}}"></script>
+
+        <script type="text/javascript">
+            $("#register_btn").show_register_form();
+        </script>
     {% endblock javascript %}
   </body>
 </html>

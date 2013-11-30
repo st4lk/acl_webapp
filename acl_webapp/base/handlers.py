@@ -29,6 +29,10 @@ class BaseHandler(tornado.web.RequestHandler):
         else:
             self.clear_cookie('user')
 
+    def is_ajax(self):
+        request_x = self.request.headers.get('X-Requested-With')
+        return request_x == 'XMLHttpRequest'
+
     def get_current_user(self):
         expires = self.settings.get('cookie_expires', 31)
         return self.get_secure_cookie('user', max_age_days=expires)

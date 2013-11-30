@@ -5,22 +5,7 @@
 
     <div class="auth_form">
         <form role="form" method="POST">
-          {{ xsrf_form_html()|safe }}
-
-          {% include "partials/forms/non_field_errors.html" %}
-
-          {% with field = form.email, placeholder = "Email address" %}
-            {% include "partials/forms/field.html" %}
-          {% endwith %}
-
-          {% with field = form.password, placeholder = "Password" %}
-            {% include "partials/forms/field.html" %}
-          {% endwith %}
-
-          {% with field = form.password2, placeholder = "Repeat password" %}
-            {% include "partials/forms/field.html" %}
-          {% endwith %}
-
+          {% include "accounts/partials/register_form.html" %}
           <button type="submit" class="btn btn-success">Register</button>
         </form>
     </div>
