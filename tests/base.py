@@ -5,6 +5,7 @@ from tornado.ioloop import IOLoop
 from tornado import gen
 import motor
 from app import ACLApp
+from acl_webapp.base.models import MAX_FIND_LIST_LEN
 from libs.http_test_client import TestClient
 
 
@@ -48,6 +49,15 @@ class BaseTest(AsyncHTTPTestCase, LogTrapTestCase, TestClient):
             result = yield motor.Op(db[collection].find_one, data)
             self.stop(result)
         async_op()
+        return self.wait()
+
+    def db_find(self, collection, data):
+        @gen.engine
+        def async_op(cursor):
+            result = yield motor.Op(cursor.to_list, MAX_FIND_LIST_LEN)
+            self.stop(result)
+        cursor = db[collection].find(data)
+        async_op(cursor)
         return self.wait()
 
     def db_save(self, collection, data):

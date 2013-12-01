@@ -86,10 +86,13 @@ class TestClient(HTTPClientMixin):
         except KeyError:
             return
 
-    def login(self, email, password, url='/auth/login/'):
+    def login(self, email, password, url='/login/'):
         data = dict(email=email, password=password)
         response = self.post(url, data, follow_redirects=False)
         if response.code != 302:
             raise LoginError(response.body)
         if 'Error' in response.body:
             raise LoginError(response.body)
+
+    def clear_cookie(self):
+        self.cookies = Cookie.SimpleCookie()
