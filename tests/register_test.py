@@ -1,26 +1,7 @@
 from base import BaseTest
 
 
-class RegisterBaseTest(BaseTest):
-
-    def assertUserExist(self, email):
-        user = self.db_find_one('accounts', {'_id': email})
-        self.assertEqual(user['_id'], email)
-
-    def assertUserNotExist(self, email):
-        user = self.db_find_one('accounts', {'_id': email})
-        self.assertEqual(user, None)
-
-    @property
-    def valid_email(self):
-        return 'vasya@vasya.com'
-
-    @property
-    def invalid_email(self):
-        return 'bad_email'
-
-
-class RegisterTestHtml(RegisterBaseTest):
+class RegisterTestHtml(BaseTest):
 
     def test_page_exist(self):
         return self.page_exist('register')
@@ -31,9 +12,9 @@ class RegisterTestHtml(RegisterBaseTest):
             'password': '123123',
             'password2': '123123',
         }
-        resp = self.post_register_xsrf(post_data)
+        resp = self.post_with_xsrf(post_data)
         # check we are redirected to home page
-        self.assertEqual(resp.code, 302)
+        self.assert302(resp)
         self.assertEqual(resp.headers['Location'], self.reverse_url('home'))
         self.assertUserExist(self.valid_email)
 
@@ -43,9 +24,9 @@ class RegisterTestHtml(RegisterBaseTest):
             'password': '123123',
             'password2': 'notequal',
         }
-        resp = self.post_register_xsrf(post_data)
+        resp = self.post_with_xsrf(post_data)
         # check, repsponse is not redirect
-        self.assertEqual(resp.code, 200)
+        self.assert200(resp)
         self.assertUserNotExist(self.valid_email)
 
     def test_bad_email(self):
@@ -54,9 +35,9 @@ class RegisterTestHtml(RegisterBaseTest):
             'password': '123123',
             'password2': '123123',
         }
-        resp = self.post_register_xsrf(post_data)
+        resp = self.post_with_xsrf(post_data)
         # check, repsponse is not redirect
-        self.assertEqual(resp.code, 200)
+        self.assert200(resp)
         self.assertUserNotExist(self.invalid_email)
 
     def test_duplicated_email(self):
@@ -65,12 +46,12 @@ class RegisterTestHtml(RegisterBaseTest):
             'password': '123123',
             'password2': '123123',
         }
-        resp = self.post_register_xsrf(post_data)
-        self.assertEqual(resp.code, 302)
+        resp = self.post_with_xsrf(post_data)
+        self.assert302(resp)
         self.clear_cookie()
         # try to create user with same email
-        resp = self.post_register_xsrf(post_data)
-        self.assertEqual(resp.code, 200)
+        resp = self.post_with_xsrf(post_data)
+        self.assert200(resp)
         # only one user in database
         users = self.db_find('accounts', {'_id': self.valid_email})
         self.assertEqual(len(users), 1)
@@ -87,11 +68,11 @@ class RegisterTestHtml(RegisterBaseTest):
         self.assertEqual(resp.code, 403)
 
 
-class RegisterTestAjax(RegisterBaseTest):
+class RegisterTestAjax(BaseTest):
 
     def test_resourse_exist(self):
         resp = self.get_ajax(self.reverse_url('register'))
-        self.assertEqual(resp.code, 200)
+        self.assert200(resp)
 
     def test_user_is_created(self):
         post_data = {
@@ -99,7 +80,7 @@ class RegisterTestAjax(RegisterBaseTest):
             'password': '123123',
             'password2': '123123',
         }
-        resp = self.post_register_xsrf(post_data, is_ajax=True)
+        resp = self.post_with_xsrf(post_data, is_ajax=True)
         resp_data = self.check_json_response(resp)
         self.assertJsonSuccess(resp_data)
         self.assertUserExist(self.valid_email)
@@ -111,7 +92,7 @@ class RegisterTestAjax(RegisterBaseTest):
             'password': '123123',
             'password2': 'notequal',
         }
-        resp = self.post_register_xsrf(post_data, is_ajax=True)
+        resp = self.post_with_xsrf(post_data, is_ajax=True)
         resp_data = self.check_json_response(resp)
         self.assertJsonFail(resp_data)
         self.assertUserNotExist(self.valid_email)
@@ -123,7 +104,7 @@ class RegisterTestAjax(RegisterBaseTest):
             'password': '123123',
             'password2': '123123',
         }
-        resp = self.post_register_xsrf(post_data, is_ajax=True)
+        resp = self.post_with_xsrf(post_data, is_ajax=True)
         resp_data = self.check_json_response(resp)
         self.assertJsonFail(resp_data)
         self.assertUserNotExist(self.invalid_email)
@@ -135,12 +116,12 @@ class RegisterTestAjax(RegisterBaseTest):
             'password': '123123',
             'password2': '123123',
         }
-        resp = self.post_register_xsrf(post_data, is_ajax=True)
+        resp = self.post_with_xsrf(post_data, is_ajax=True)
         resp_data = self.check_json_response(resp)
         self.assertJsonSuccess(resp_data)
         self.clear_cookie()
         # try to create user with same email
-        resp = self.post_register_xsrf(post_data, is_ajax=True)
+        resp = self.post_with_xsrf(post_data, is_ajax=True)
         resp_data = self.check_json_response(resp)
         self.assertJsonFail(resp_data)
         # only one user in database

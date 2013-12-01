@@ -46,17 +46,17 @@ class BaseTest(AsyncHTTPTestCase, LogTrapTestCase, TestClient):
         json_resp = json.loads(response.body)
         return json_resp
 
-    def post_register_xsrf(self, data, is_ajax=False):
-        reg_url = self.reverse_url('register')
-        resp = self.get(reg_url)
+    def post_with_xsrf(self, data, url_name='register', is_ajax=False):
+        url = self.reverse_url(url_name)
+        resp = self.get(url)
         # add xsrf to post request
         data['_xsrf'] = re.search(
             '<input type="hidden" name="_xsrf" value="(.*?)"', resp.body)\
             .group(1)
         if is_ajax:
-            return self.post_ajax(reg_url, data=data)
+            return self.post_ajax(url, data=data)
         else:
-            return self.post(reg_url, data=data)
+            return self.post(url, data=data)
 
     def register_user(self, email, password):
         data = {
@@ -64,10 +64,24 @@ class BaseTest(AsyncHTTPTestCase, LogTrapTestCase, TestClient):
             'password': password,
             'password2': password,
         }
-        resp = self.post_register_xsrf(data)
+        resp = self.post_with_xsrf(data)
         if resp.code != 302:
             raise RegisterError()
         return resp
+
+    def assertUserExist(self, email):
+        user = self.db_find_one('accounts', {'_id': email})
+        self.assertEqual(user['_id'], email)
+
+    def assertUserNotExist(self, email):
+        user = self.db_find_one('accounts', {'_id': email})
+        self.assertEqual(user, None)
+
+    def assert302(self, resp):
+        self.assertEqual(resp.code, 302)
+
+    def assert200(self, resp):
+        self.assertEqual(resp.code, 200)
 
     def db_clear(self):
         @gen.engine
@@ -107,3 +121,11 @@ class BaseTest(AsyncHTTPTestCase, LogTrapTestCase, TestClient):
 
     def assertJsonFail(self, json_data):
         self.assertFalse(json_data['result'])
+
+    @property
+    def valid_email(self):
+        return 'vasya@vasya.com'
+
+    @property
+    def invalid_email(self):
+        return 'bad_email'
