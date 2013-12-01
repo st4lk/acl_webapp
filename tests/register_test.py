@@ -68,7 +68,7 @@ class RegisterTestHtml(BaseTest):
         self.assertEqual(resp.code, 403)
 
 
-class RegisterTestAjax(BaseTest):
+class RegisterAjaxTest(BaseTest):
 
     def test_resourse_exist(self):
         resp = self.get_ajax(self.reverse_url('register'))
