@@ -133,6 +133,7 @@ class RegisterTestAjax(RegisterBaseTest):
         resp_data = self.check_json_response(resp)
         self.assertJsonFail(resp_data)
         self.assertUserNotExist(self.valid_email)
+        self.assertTrue('password2' in resp_data['errors'])
 
     def test_bad_email(self):
         post_data = {
@@ -144,6 +145,7 @@ class RegisterTestAjax(RegisterBaseTest):
         resp_data = self.check_json_response(resp)
         self.assertJsonFail(resp_data)
         self.assertUserNotExist(self.invalid_email)
+        self.assertTrue('email' in resp_data['errors'])
 
     def test_duplicated_email(self):
         post_data = {
@@ -162,6 +164,7 @@ class RegisterTestAjax(RegisterBaseTest):
         # only one user in database
         users = self.db_find('accounts', {'_id': self.valid_email})
         self.assertEqual(len(users), 1)
+        self.assertTrue('email' in resp_data['errors'])
 
     def test_no_xsrf(self):
         post_data = {
