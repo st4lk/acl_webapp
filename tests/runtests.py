@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import, division, with_statement
 import sys
+sys.path.append('acl_webapp')
 import unittest
 import settings  # only options.define to be runned
 
