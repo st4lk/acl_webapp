@@ -36,8 +36,8 @@
     function showRequest(formData, jqForm, options) { 
         // start animation
         var loader_small = ajax_amin_small('reg_post_anim');
-        $(".modal-footer").prepend(loader_small);
-        $("#register_submit").attr('disabled', 'disabled');
+        jqForm.find('.modal-footer').prepend(loader_small);
+        jqForm.find('button[type="submit"]').attr('disabled', 'disabled');
         return true; 
     } 
 
@@ -45,18 +45,17 @@
     function showResponse(responseText, statusText, xhr, $form) {
         // stop animation
         $('.reg_post_anim').remove();
-        $("#register_submit").removeAttr('disabled');
+        $form.find('button[type="submit"]').removeAttr('disabled');
         // process response
         var resp = responseText;
-        var frm = $("#register_ajax_form");
-        clearErr(frm);
+        clearErr($form);
         if (resp.result){
             window.location.replace(resp.redirect_url);
         } else {
             //show errors
             var cnt = 1;
             for (var err in resp.errors){
-                var fail_elem = frm.find('#' + err);
+                var fail_elem = $form.find('#' + err);
                 var fail_group = fail_elem.closest(".form-group");
                 for (var j=0; j<ERR_CLASSES.length; j++){
                     fail_group.addClass(ERR_CLASSES[j]);
@@ -69,7 +68,7 @@
         }
     } 
 
-    $.fn.ajax_register = function(){
+    $.fn.ajax_auth = function(){
         // require <script src="http://malsup.github.com/jquery.form.js"></script>
         var options = { 
             beforeSubmit:  showRequest,
@@ -81,20 +80,20 @@
           })
     }
 
-    $.fn.show_register_form = function(){
+    $.fn.show_register_form = function(modal_selector, anim_css){
         // suggestion modal form
-        var loader_small = ajax_amin_small('reg_btn_anim');
+        var loader_small = ajax_amin_small(anim_css);
         return this.each(function(){
             $(this).click(function(){
                 var btn = $(this);
-                var modal_elem = $("#register_modal");
+                var modal_elem = $(modal_selector);
                 if (modal_elem.length == 0){
                     loader_small.insertAfter(btn);
                     btn.addClass('disabled');
                     $.get(btn.attr('href'), function(data){
                         $(data).appendTo('body');
-                        modal_elem = $("#register_modal");
-                        modal_elem.ajax_register();
+                        modal_elem = $(modal_selector);
+                        modal_elem.ajax_auth();
                         modal_elem.modal();
                         btn.removeClass('disabled');
                         loader_small.remove();

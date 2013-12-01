@@ -1,0 +1,19 @@
+<!-- Modal -->
+<div class="modal fade" id="login_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="myModalLabel">Login</h4>
+      </div>
+    <form id="register_ajax_form" action="{{ reverse_url('login') }}" method="post">
+      <div class="modal-body">
+         {% include "accounts/partials/login_form.html" %}
+      </div>
+      <div class="modal-footer">
+        <button id="register_submit" type="submit" class="btn btn-success">Login</button>
+      </div>
+    </form>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

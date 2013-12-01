@@ -1,0 +1,11 @@
+  {{ xsrf_form_html()|safe }}
+
+  {% include "partials/forms/non_field_errors.html" %}
+
+  {% with field = form.email, placeholder = "Email address" %}
+    {% include "partials/forms/field.html" %}
+  {% endwith %}
+
+  {% with field = form.password, placeholder = "Password" %}
+    {% include "partials/forms/field.html" %}
+  {% endwith %}

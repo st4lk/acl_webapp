@@ -56,7 +56,8 @@
         <script src="{{static_url('js/scripts.js')}}"></script>
 
         <script type="text/javascript">
-            $("#register_btn").show_register_form();
+            $("#register_btn").show_register_form("#register_modal", "reg_btn_anim");
+            $("#login_btn").show_register_form("#login_modal", "reg_btn_anim");
         </script>
     {% endblock javascript %}
   </body>

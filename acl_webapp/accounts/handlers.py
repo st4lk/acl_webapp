@@ -82,10 +82,14 @@ class LoginHandler(BaseHandler, AuthMixin):
     def initialize(self, **kwargs):
         super(LoginHandler, self).initialize(**kwargs)
         self.template_name = "accounts/login.html"
+        self.template_name_ajax = "accounts/login_ajax.html"
 
     def get(self):
         form = LoginForm()
-        self.render(self.template_name, {"form": form})
+        if self.is_ajax:
+            self.render(self.template_name_ajax, {'form': form})
+        else:
+            self.render(self.template_name, {'form': form})
 
     @gen.coroutine
     def post(self):
