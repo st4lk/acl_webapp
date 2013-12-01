@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 import Cookie
 import json
 from tornado.testing import AsyncHTTPTestCase, LogTrapTestCase
@@ -14,6 +15,10 @@ MONGO_TEST_DB = 'acl_app_test'
 app = ACLApp(mongo_db=MONGO_TEST_DB)
 reverse_url = app.reverse_url
 db = app.settings['db']
+
+
+class RegisterError(Exception):
+    pass
 
 
 class BaseTest(AsyncHTTPTestCase, LogTrapTestCase, TestClient):
@@ -40,6 +45,29 @@ class BaseTest(AsyncHTTPTestCase, LogTrapTestCase, TestClient):
         self.assertEqual(response.code, 200)
         json_resp = json.loads(response.body)
         return json_resp
+
+    def post_register_xsrf(self, data, is_ajax=False):
+        reg_url = self.reverse_url('register')
+        resp = self.get(reg_url)
+        # add xsrf to post request
+        data['_xsrf'] = re.search(
+            '<input type="hidden" name="_xsrf" value="(.*?)"', resp.body)\
+            .group(1)
+        if is_ajax:
+            return self.post_ajax(reg_url, data=data)
+        else:
+            return self.post(reg_url, data=data)
+
+    def register_user(self, email, password):
+        data = {
+            'email': email,
+            'password': password,
+            'password2': password,
+        }
+        resp = self.post_register_xsrf(data)
+        if resp.code != 302:
+            raise RegisterError()
+        return resp
 
     def db_clear(self):
         @gen.engine
@@ -73,3 +101,9 @@ class BaseTest(AsyncHTTPTestCase, LogTrapTestCase, TestClient):
             self.stop(result)
         async_op()
         return self.wait()
+
+    def assertJsonSuccess(self, json_data):
+        self.assertTrue(json_data['result'])
+
+    def assertJsonFail(self, json_data):
+        self.assertFalse(json_data['result'])

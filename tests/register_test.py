@@ -1,19 +1,7 @@
-import re
 from base import BaseTest
 
 
 class RegisterBaseTest(BaseTest):
-    def post_register_xsrf(self, data, is_ajax=False):
-        reg_url = self.reverse_url('register')
-        resp = self.get(reg_url)
-        # add xsrf to post request
-        data['_xsrf'] = re.search(
-            '<input type="hidden" name="_xsrf" value="(.*?)"', resp.body)\
-            .group(1)
-        if is_ajax:
-            return self.post_ajax(reg_url, data=data)
-        else:
-            return self.post(reg_url, data=data)
 
     def assertUserExist(self, email):
         user = self.db_find_one('accounts', {'_id': email})
@@ -22,12 +10,6 @@ class RegisterBaseTest(BaseTest):
     def assertUserNotExist(self, email):
         user = self.db_find_one('accounts', {'_id': email})
         self.assertEqual(user, None)
-
-    def assertJsonSuccess(self, json_data):
-        self.assertTrue(json_data['result'])
-
-    def assertJsonFail(self, json_data):
-        self.assertFalse(json_data['result'])
 
     @property
     def valid_email(self):
@@ -176,9 +158,3 @@ class RegisterTestAjax(RegisterBaseTest):
         resp = self.post_ajax(reg_url, data=post_data)
         # Forbidden
         self.assertEqual(resp.code, 403)
-
-
-class LoginTest(BaseTest):
-
-    def test_page_exist(self):
-        return self.page_exist('login')
