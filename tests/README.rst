@@ -19,6 +19,10 @@ Run instructions
     coverage run --source=acl_webapp -m tests.runtests
     coverage report
 
+    # to see detailed html report, run
+    coverage html
+    # Then visit htmlcov/index.html in your browser, to see a report [like this](http://nedbatchelder.com/code/coverage/sample_html).
+
 Test create instructions
 ------------------------
 
