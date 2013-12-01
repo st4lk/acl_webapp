@@ -5,3 +5,4 @@ tz.md
 build/
 *.egg-info
 .tox/
+.coverage

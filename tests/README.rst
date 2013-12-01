@@ -8,6 +8,16 @@ Run instructions
     
     python -m tests.runtests
 
+ - Run using tox
+
+    pip install tox
+    tox
+
+ - Run with coverage
+
+    pip install coverage
+    coverage run --source=acl_webapp -m tests.runtests
+    coverage report
 
 Test create instructions
 ------------------------
