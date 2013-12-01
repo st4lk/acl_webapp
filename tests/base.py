@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import Cookie
+import json
 from tornado.testing import AsyncHTTPTestCase, LogTrapTestCase
 from tornado.ioloop import IOLoop
 from tornado import gen
@@ -34,6 +35,11 @@ class BaseTest(AsyncHTTPTestCase, LogTrapTestCase, TestClient):
 
     def get_new_ioloop(self):
         return IOLoop.instance()
+
+    def check_json_response(self, response):
+        self.assertEqual(response.code, 200)
+        json_resp = json.loads(response.body)
+        return json_resp
 
     def db_clear(self):
         @gen.engine

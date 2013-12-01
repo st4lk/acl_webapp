@@ -1,3 +1,4 @@
+from functools import wraps
 from urllib import urlencode
 import Cookie
 from tornado.httpclient import HTTPRequest
@@ -42,6 +43,16 @@ class HTTPClientMixin(object):
         return self.wait()
 
 
+def set_ajax_headers(func):
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        if 'headers' not in kwargs or kwargs['headers'] is None:
+            kwargs['headers'] = {}
+        kwargs['headers']['X-Requested-With'] = 'XMLHttpRequest'
+        return func(*args, **kwargs)
+    return wrapped
+
+
 class TestClient(HTTPClientMixin):
     def __init__(self, testcase):
         self.testcase = testcase
@@ -72,6 +83,14 @@ class TestClient(HTTPClientMixin):
                           headers=headers, follow_redirects=follow_redirects)
         self._update_cookies(response.headers)
         return response
+
+    @set_ajax_headers
+    def get_ajax(self, *args, **kwargs):
+        return self.get(*args, **kwargs)
+
+    @set_ajax_headers
+    def post_ajax(self, *args, **kwargs):
+        return self.post(*args, **kwargs)
 
     def _update_cookies(self, headers):
         try:
