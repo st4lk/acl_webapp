@@ -27,10 +27,6 @@ class UserModel(BaseModel):
             params['_id'] = params.pop('email')
         return params
 
-    @classmethod
-    def get_id_name(cls):
-        return 'email'
-
     def validate(self, *args, **kwargs):
         try:
             return super(UserModel, self).validate(*args, **kwargs)

@@ -30,10 +30,6 @@ class BaseModel(Model):
     _id = NumberType(number_class=ObjectId, number_type="ObjectId")
 
     @classmethod
-    def get_id_name(cls):
-        return '_id'
-
-    @classmethod
     def process_params(cls, params):
         """
         Params can be modified here before actual providing to database.
