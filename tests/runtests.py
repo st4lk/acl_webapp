@@ -10,6 +10,7 @@ import settings  # only options.define to be runned
 
 TEST_MODULES = [
     'tests.home_page_test',
+    'tests.auth_test',
 ]
 
 

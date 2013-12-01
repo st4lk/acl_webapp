@@ -16,3 +16,9 @@ class BaseTest(AsyncHTTPTestCase, LogTrapTestCase):
 
     def get_app(self):
         return app
+
+    def page_exist(self, url_name):
+        url = self.reverse_url(url_name)
+        self.http_client.fetch(self.get_url(url), self.stop)
+        response = self.wait()
+        self.assertEqual(response.code, 200)
