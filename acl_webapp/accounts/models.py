@@ -9,7 +9,7 @@ class UserModel(BaseModel):
     _id = EmailType(required=True)
     # _id = EmailType(required=True, serialized_name="email")
     password = StringType(required=True, min_length=3, max_length=50)
-    permissions = DictType(ListType, nested_field=StringType)
+    permissions = DictType(ListType, compound_field=StringType)
     first_name = StringType()
     last_name = StringType()
 

@@ -8,6 +8,6 @@ class NewsModel(BaseModel):
     title = StringType()
     content = StringType()
     author = StringType()  # email of author
-    comments = ListType(DictType, nested_field=StringType)
+    comments = ListType(DictType, compound_field=StringType)
 
     MONGO_COLLECTION = 'news'
