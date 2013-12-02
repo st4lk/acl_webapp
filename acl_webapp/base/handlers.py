@@ -81,10 +81,12 @@ class PermissionBaseHandler(BaseHandler):
     def get(self, *args, **kwargs):
         permitted = yield self.user_is_permitted()
         if permitted:
-            context = yield self.get_context()
-            self.render(self.template_name, context)
-        else:
-            self.render_permission_denied()
+            permitted = yield self.get_additional_permissions()
+            if permitted:
+                context = yield self.get_context()
+                self.render(self.template_name, context)
+                return
+        self.render_permission_denied()
 
     def add_context_permissions(self, context):
         context.update({'permissions': self.user_permissions})
@@ -99,6 +101,10 @@ class PermissionBaseHandler(BaseHandler):
 
     def set_user_permissions(self, user):
         self.user_permissions = user.get_permissions(self.get_model())
+
+    @gen.coroutine
+    def get_additional_permissions(self):
+        raise gen.Return(True)
 
     @gen.coroutine
     def user_is_permitted(self):
@@ -245,6 +251,7 @@ class DetailHandler(PermissionBaseHandler):
         self.skip_permissions = False
         self.needed_permissions = set(['read'])
         self.model = None
+        self.object = None
 
     def get_model(self):
         return self.model
@@ -254,6 +261,7 @@ class DetailHandler(PermissionBaseHandler):
         model = self.get_model()
         obj_id = ObjectId(self.path_kwargs['object_id'])
         obj = yield motor.Op(model.find_one, self.db, {"_id": obj_id})
+        self.object = obj
         raise gen.Return(obj)
 
     @gen.coroutine
@@ -265,3 +273,36 @@ class DetailHandler(PermissionBaseHandler):
         self.add_context_permissions(context)
         self.add_additional_context(context)
         raise gen.Return(context)
+
+
+class DeleteHandler(DetailHandler):
+    def initialize(self, **kwargs):
+        super(DeleteHandler, self).initialize(**kwargs)
+        self.needed_permissions = set(['delete'])
+        self.success_url = None
+
+    def get_model(self):
+        return self.model
+
+    @gen.coroutine
+    def delete_obj(self):
+        obj_id = ObjectId(self.path_kwargs['object_id'])
+        yield motor.Op(
+            self.get_model().remove_entries, self.db, {'_id': obj_id})
+
+    def get_success_url(self):
+        return self.success_url
+
+    def post_success(self):
+        self.redirect(self.get_success_url())
+
+    @gen.coroutine
+    def post(self, *args, **kwargs):
+        permitted = yield self.user_is_permitted()
+        if permitted:
+            permitted = yield self.get_additional_permissions()
+            if permitted:
+                yield self.delete_obj()
+                self.post_success()
+                return
+        self.render_permission_denied()

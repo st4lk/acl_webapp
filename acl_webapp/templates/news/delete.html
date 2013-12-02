@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h3>Are you sure, you want to delete '{{ obj.title }}'?</h3>
+    <form role="form" method="POST">
+          {{ xsrf_form_html()|safe }}
+          <button type="submit" class="btn btn-success">Yes</button>
+          <a href="{{ reverse_url('news_list') }}" class="btn btn-success">No</a>
+    </form>
+{% endblock content %}

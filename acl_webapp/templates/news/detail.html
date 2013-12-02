@@ -1,6 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
+    {% if 'delete' in permissions and obj.author==current_user %}
+    <div class="row">
+        <div class="pull-right">
+            <a href="{{ reverse_url('news_delete', obj._id) }}" class="btn btn-danger">Delete</a>
+        </div>
+    </div>
+    {% endif %}
     <h1>{{ obj.title }}</h1>
     <p>{{ obj.content }}</p>
     <p>Author: {{ obj.author }}</p>

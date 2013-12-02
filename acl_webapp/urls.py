@@ -3,7 +3,7 @@ from tornado.web import url
 from pages.handlers import HomeHandler
 from accounts.handlers import RegisterHandler, LogoutHandler, LoginHandler
 from news.handlers import NewsListHandler, NewsCreateHandler,\
-    NewsDetailHandler
+    NewsDetailHandler, NewsDeleteHandler
 
 
 url_patterns = [
@@ -20,4 +20,6 @@ url_patterns = [
     url(r"/news/create/", NewsCreateHandler, name="news_create"),
     url(r"/news/detail/(?P<object_id>[0-9a-f]+)/", NewsDetailHandler,
         name="news_detail"),
+    url(r"/news/delete/(?P<object_id>[0-9a-f]+)/", NewsDeleteHandler,
+        name="news_delete"),
 ]
