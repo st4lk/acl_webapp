@@ -46,8 +46,9 @@ class BaseTest(AsyncHTTPTestCase, LogTrapTestCase, TestClient):
         json_resp = json.loads(response.body)
         return json_resp
 
-    def post_with_xsrf(self, data=None, url_name='register', is_ajax=False):
-        url = self.reverse_url(url_name)
+    def post_with_xsrf(self, data=None, url_name='register', url=None,
+            is_ajax=False):
+        url = url or self.reverse_url(url_name)
         resp = self.get(url)
         # add xsrf to post request
         data['_xsrf'] = re.search(
@@ -119,6 +120,9 @@ class BaseTest(AsyncHTTPTestCase, LogTrapTestCase, TestClient):
 
     def assert302(self, resp):
         self.assertEqual(resp.code, 302)
+
+    def assert403(self, resp):
+        self.assertEqual(resp.code, 403)
 
     def assert200(self, resp):
         self.assertEqual(resp.code, 200)
