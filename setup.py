@@ -22,7 +22,7 @@ setup(
     long_description=__read('README.rst'),
     platforms=('Any'),
     packages=find_packages(),
-    install_requires=install_requires,
+    install_requires="",  # TODO: check, why tox fails with install_requires
     keywords='tornado mongodb motor async acl example'.split(),
     include_package_data=True,
     license='BSD License',
