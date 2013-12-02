@@ -10,7 +10,9 @@ def __read(fname):
         return ''
 
 
-install_requires = __read('requirements.txt').split()
+install_requires = __read('requirements.txt').split('\n')
+
+import pdb; pdb.set_trace()
 
 setup(
     name='acl_webapp',
