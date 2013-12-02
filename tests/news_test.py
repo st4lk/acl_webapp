@@ -36,17 +36,28 @@ class NewsListTest(NewsBaseTest):
         self.assert200(resp)
         self.assertTrue(self.valid_title not in resp.body)
 
-    def test_user_no_rights(self):
+    def test_user_no_permissions(self):
         self.create_news()
         self.register_user(self.valid_email, '123123')
         self.set_user_permissions(self.valid_email, [])
         resp = self.get(self.reverse_url('news_list'))
         self.assert200(resp)
         self.assertTrue(self.valid_title not in resp.body)
+        self.assertTrue(self.reverse_url('news_create') not in resp.body)
 
-    def test_user_has_default_read_rights(self):
+    def test_user_has_default_read_permissions(self):
         self.create_news()
         self.register_user(self.valid_email, '123123')
         resp = self.get(self.reverse_url('news_list'))
         self.assert200(resp)
         self.assertTrue(self.valid_title in resp.body)
+        self.assertTrue(self.reverse_url('news_create') not in resp.body)
+
+    def test_user_has_read_write_permissions(self):
+        self.create_news()
+        self.register_user(self.valid_email, '123123')
+        self.set_user_permissions(self.valid_email, ['read', 'write'])
+        resp = self.get(self.reverse_url('news_list'))
+        self.assert200(resp)
+        self.assertTrue(self.valid_title in resp.body)
+        self.assertTrue(self.reverse_url('news_create') in resp.body)
