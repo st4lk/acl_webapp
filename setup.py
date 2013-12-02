@@ -12,8 +12,6 @@ def __read(fname):
 
 install_requires = __read('requirements.txt').split('\n')
 
-import pdb; pdb.set_trace()
-
 setup(
     name='acl_webapp',
     author=__author__,
