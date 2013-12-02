@@ -2,7 +2,7 @@ from tornado.web import url
 
 from pages.handlers import HomeHandler
 from accounts.handlers import RegisterHandler, LogoutHandler, LoginHandler
-from news.handlers import NewsListHandler
+from news.handlers import NewsListHandler, NewsCreateHandler
 
 
 url_patterns = [
@@ -16,4 +16,5 @@ url_patterns = [
 
     # news
     url(r"/news/", NewsListHandler, name="news_list"),
+    url(r"/news/create/", NewsCreateHandler, name="news_create"),
 ]

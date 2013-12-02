@@ -11,15 +11,26 @@ class ModelNotProvidedException(Exception):
 
 
 class Form(WTForm):
+    def get_err_msg(self, err_code):
+        text_errors = getattr(self, 'text_errors', {})
+        return text_errors.get(err_code, err_code)
+
     def set_field_error(self, field_name, err_code):
         """
         Adds given error message to given field_name.
         First, it tries to find error message in self.text_errors dict by
         `err_code` key. If not find, just set error message to err_code.
         """
-        text_errors = getattr(self, 'text_errors', {})
-        err_msg = text_errors.get(err_code, err_code)
+        err_msg = self.get_err_msg(err_code)
         getattr(self, field_name).errors.append(err_msg)
+
+    def set_nonfield_error(self, err_code):
+        err_msg = self.get_err_msg(err_code)
+        if self._errors is None:
+            self._errors = {}
+        self._errors.set_default('whole_form', [])
+        self.errors['whole_form'].append(err_msg)
+        getattr(self, 'field_name').errors.append(err_msg)
 
 
 class ModelForm(Form):
@@ -74,9 +85,7 @@ class ModelForm(Form):
                         errors.extend(err_msgs)
             else:
                 l.warning("Unknown validation error: '{0}'".format(e))
-                if self._errors is None:
-                    self._errors = {}
-                self._errors['whole_form'] = ["Unknown error.", ]
+                self.set_nonfield_error("Unknown error.")
             return False
         self._model_object = obj
         return valid

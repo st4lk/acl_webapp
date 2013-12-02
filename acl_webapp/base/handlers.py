@@ -1,59 +1,22 @@
 import logging
 import json
-from functools import wraps
 import tornado.web
 from tornado import gen
 import motor
+from pymongo.errors import DuplicateKeyError
 from settings import jinja_env
+from .decorators import check_skip_permissions
 
-logger = logging.getLogger('edtr_logger')
-
-
-def check_skip_permissions(func):
-    @wraps(func)
-    def wrapped(self, *args, **kwargs):
-        if self.skip_permissions:
-            return True
-        return func(self, *args, **kwargs)
-    return wrapped
+logger = logging.getLogger(__name__)
 
 
-class PermissionMixin(object):
-
-    @check_skip_permissions
-    def check_permission(self, user, needed_permissions=None):
-        needed_permissions = needed_permissions or self.needed_permissions
-        if not user:
-            return False
-        return user.has_permission(self.model, needed_permissions)
-
-    def set_user_permissions(self, user):
-        self.user_permissions = user.get_permissions(self.model)
-
-    def get_permission_denied_template(self):
-        template_name = getattr(self, 'permission_denied_template', None)
-        if template_name is None:
-            template_name = "permission_denied.html"
-        return template_name
-
-    def get_permission_denied_context(self):
-        return {}
-
-    def render_permission_denied(self):
-        context = self.get_permission_denied_context()
-        template_name = self.get_permission_denied_template()
-        self.render(template_name, context)
-
-
-class BaseHandler(tornado.web.RequestHandler, PermissionMixin):
+class BaseHandler(tornado.web.RequestHandler):
     """A class to collect common handler methods - all other handlers should
     subclass this one.
     """
     def initialize(self, **kwargs):
         super(BaseHandler, self).initialize(**kwargs)
         self.db = self.settings['db']
-        self.skip_permissions = True
-        self.user_permissions = []
         self.current_user_object = None
 
     def render(self, template, context=None):
@@ -85,6 +48,9 @@ class BaseHandler(tornado.web.RequestHandler, PermissionMixin):
         expires = self.settings.get('cookie_expires', 31)
         return self.get_secure_cookie('user', max_age_days=expires)
 
+    def get_login_url(self):
+        return self.reverse_url('login')
+
     @gen.coroutine
     def get_current_user_object(self):
         from accounts.models import UserModel
@@ -98,28 +64,71 @@ class BaseHandler(tornado.web.RequestHandler, PermissionMixin):
         self.current_user_object = user
         raise gen.Return(user)
 
+    def add_additional_context(self, context):
+        context.update({})
 
-class ListHandler(BaseHandler):
+
+class PermissionBaseHandler(BaseHandler):
 
     def initialize(self, **kwargs):
-        super(ListHandler, self).initialize(**kwargs)
-        self.skip_permissions = False
-        self.needed_permissions = set(['read'])
+        super(PermissionBaseHandler, self).initialize(**kwargs)
+        self.skip_permissions = True
+        self.user_permissions = []
 
     @gen.coroutine
     def get(self):
-        user = self.current_user_object
-        if user is None:
-            user = yield self.get_current_user_object()
-        if self.check_permission(user):
-            self.set_user_permissions(user)
+        permitted = yield self.user_is_permitted()
+        if permitted:
             context = yield self.get_context()
             self.render(self.template_name, context)
         else:
             self.render_permission_denied()
 
-    def get_additional_context(self):
+    def add_context_permissions(self, context):
+        context.update({'permissions': self.user_permissions})
+        return context
+
+    @check_skip_permissions
+    def check_permission(self, user, needed_permissions=None):
+        needed_permissions = needed_permissions or self.needed_permissions
+        if not user:
+            return False
+        return user.has_permission(self.get_model(), needed_permissions)
+
+    def set_user_permissions(self, user):
+        self.user_permissions = user.get_permissions(self.get_model())
+
+    @gen.coroutine
+    def user_is_permitted(self):
+        user = self.current_user_object
+        if user is None:
+            user = yield self.get_current_user_object()
+        result = self.check_permission(user)
+        if result:
+            self.set_user_permissions(user)
+        raise gen.Return(self.check_permission(user))
+
+    def get_permission_denied_template(self):
+        template_name = getattr(self, 'permission_denied_template', None)
+        if template_name is None:
+            template_name = "permission_denied.html"
+        return template_name
+
+    def get_permission_denied_context(self):
         return {}
+
+    def render_permission_denied(self):
+        context = self.get_permission_denied_context()
+        template_name = self.get_permission_denied_template()
+        self.render(template_name, context)
+
+
+class ListHandler(PermissionBaseHandler):
+
+    def initialize(self, **kwargs):
+        super(ListHandler, self).initialize(**kwargs)
+        self.skip_permissions = False
+        self.needed_permissions = set(['read'])
 
     @gen.coroutine
     def get_context(self):
@@ -128,9 +137,9 @@ class ListHandler(BaseHandler):
         context = {
             'object_list': object_list,
             'page': page,
-            'permissions': self.user_permissions
         }
-        context.update(self.get_additional_context())
+        self.add_context_permissions(context)
+        self.add_additional_context(context)
         raise gen.Return(context)
 
     def get_model(self):
@@ -151,3 +160,78 @@ class ListHandler(BaseHandler):
             cursor.skip((page-1) * model.find_list_len())
         object_list = yield motor.Op(model.find, cursor)
         raise gen.Return(object_list)
+
+
+class CreateHandler(PermissionBaseHandler):
+    def initialize(self, **kwargs):
+        super(CreateHandler, self).initialize(**kwargs)
+        self.skip_permissions = False
+        self.needed_permissions = set(['write'])
+        self.model = None
+        self.form_class = False
+        self.success_url = None
+
+    @gen.coroutine
+    def post(self):
+        permitted = yield self.user_is_permitted()
+        if permitted:
+            form = self.post_form()
+            if form.validate():
+                result = yield self.form_valid(form)
+                if result:
+                    self.post_success()
+                    return
+            self.form_invalid(form)
+        else:
+            self.render_permission_denied()
+
+    @gen.coroutine
+    def form_valid(self, form):
+        obj = form.get_object()
+        result = False
+        try:
+            yield motor.Op(obj.insert, self.db)
+            result = True
+        except DuplicateKeyError:
+            form.set_nonfield_error("duplicate_error")
+        raise gen.Return(result)
+
+    def form_invalid(self, form):
+        context = {'form': form}
+        self.add_context_permissions(context)
+        self.add_additional_context(context)
+        self.render(self.template_name, context)
+
+    def post_success(self):
+        self.redirect(self.get_success_url())
+
+    def get_model(self):
+        if self.model:
+            return self.model
+        model_class = self.get_form_class()
+        return getattr(model_class, '_model', None)
+
+    def get_form_class(self):
+        return self.form_class
+
+    def get_form_kwargs(self):
+        return {}
+
+    def get_form(self):
+        return self.get_form_class()(**self.get_form_kwargs())
+
+    def post_form(self):
+        return self.get_form_class()(
+            self.request.arguments, **self.get_form_kwargs())
+
+    def get_success_url(self):
+        return self.success_url
+
+    @gen.coroutine
+    def get_context(self):
+        context = {
+            'form': self.get_form(),
+        }
+        self.add_context_permissions(context)
+        self.add_additional_context(context)
+        raise gen.Return(context)

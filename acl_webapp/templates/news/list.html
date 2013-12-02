@@ -3,12 +3,13 @@
 {% block content %}
     <h1>News:</h1>
     {% if 'write' in permissions %}
-        <a href="#">Link to create</a>
+    <div class="row">
+        <div class="pull-right">
+            <a href="{{ reverse_url('news_create') }}" class="btn btn-success">Create new post</a>
+        </div>
+    </div>
     {% endif %}
     {% for obj in object_list %}
-        {% if current_user == obj.author and 'write' in permissions %}
-            <a href="#">Link to edit</a>
-        {% endif %}
         <h3>{{ obj.title }}</h3>
         <p>{{ obj.content }}</p>
         <p>Author: {{ obj.author }}</p>

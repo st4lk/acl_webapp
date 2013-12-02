@@ -79,6 +79,8 @@ class BaseModel(Model):
     def insert(self, db, collection=None, ser=None, callback=None, **kwargs):
         c = self.check_collection(collection)
         data = ser or self.to_primitive()
+        if '_id' in data and data['_id'] is None:
+            del data['_id']
         db[c].insert(data, callback=callback, **kwargs)
 
     @gen.coroutine

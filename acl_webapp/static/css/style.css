@@ -2,6 +2,14 @@
     max-width: 400px;
 }
 
+.post_form {
+    max-width: 750px;
+}
+
+.post_form textarea {
+    min-height: 150px;  
+}
+
 .reg_btn_anim {
     position: absolute;
     top: 17px;

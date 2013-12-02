@@ -25,7 +25,7 @@ settings = {
     'cookie_secret': "vZS/c+BKTASaEjrBJ51uMMX+AwCyp0bcmXHOlX0jd0s=",
     'cookie_expires': 31,  # cookie will be valid for this amount of days
     'xsrf_cookies': True,
-    'login_url': '/accounts/login',
+    'login_url': '/login/',
 }
 
 # Jinja settings
