@@ -1,4 +1,5 @@
 from schematics.types import StringType, EmailType
+from schematics.types.compound import ListType, DictType
 from schematics.exceptions import ModelValidationError
 from base.models import BaseModel
 from .hashers import check_password, make_password
@@ -8,10 +9,12 @@ class UserModel(BaseModel):
     _id = EmailType(required=True)
     # _id = EmailType(required=True, serialized_name="email")
     password = StringType(required=True, min_length=3, max_length=50)
+    permissions = DictType(ListType, nested_field=StringType)
     first_name = StringType()
     last_name = StringType()
 
     MONGO_COLLECTION = 'accounts'
+    DEFAULT_PERMISSIONS = {"news": ['read', ]}
 
     @property
     def email(self):
@@ -40,3 +43,13 @@ class UserModel(BaseModel):
 
     def set_password(self, plaintext):
         self.password = make_password(plaintext)
+
+    def has_permission(self, model, needed_permissions):
+        model_name = model.get_model_name()
+        user_permissions = set(self.permissions.get(model_name, []))
+        return not (needed_permissions - user_permissions)
+
+    def insert(self, *args, **kwargs):
+        if not self.permissions:
+            self.permissions = dict(self.DEFAULT_PERMISSIONS)
+        return super(UserModel, self).insert(*args, **kwargs)

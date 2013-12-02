@@ -1,5 +1,6 @@
 import logging
 import json
+from functools import wraps
 import tornado.web
 from tornado import gen
 import motor
@@ -8,13 +9,46 @@ from settings import jinja_env
 logger = logging.getLogger('edtr_logger')
 
 
-class BaseHandler(tornado.web.RequestHandler):
+def check_skip_permissions(func):
+    @wraps(func)
+    def wrapped(self, *args, **kwargs):
+        if self.skip_permissions:
+            return True
+        return func(self, *args, **kwargs)
+    return wrapped
+
+
+class PermissionMixin(object):
+
+    @check_skip_permissions
+    def check_permission(self, user):
+        if not user:
+            return False
+        return user.has_permission(self.model, self.needed_permissions)
+
+    def get_permission_denied_template(self):
+        template_name = getattr(self, 'permission_denied_template', None)
+        if template_name is None:
+            template_name = "permission_denied.html"
+        return template_name
+
+    def get_permission_denied_context(self):
+        return {}
+
+    def render_permission_denied(self):
+        context = self.get_permission_denied_context()
+        template_name = self.get_permission_denied_template()
+        self.render(template_name, context)
+
+
+class BaseHandler(tornado.web.RequestHandler, PermissionMixin):
     """A class to collect common handler methods - all other handlers should
     subclass this one.
     """
     def initialize(self, **kwargs):
         super(BaseHandler, self).initialize(**kwargs)
         self.db = self.settings['db']
+        self.skip_permissions = True
 
     def render(self, template, context=None):
         """Renders template using jinja2"""
@@ -45,13 +79,34 @@ class BaseHandler(tornado.web.RequestHandler):
         expires = self.settings.get('cookie_expires', 31)
         return self.get_secure_cookie('user', max_age_days=expires)
 
+    @gen.coroutine
+    def get_current_user_object(self):
+        from accounts.models import UserModel
+        email = self.current_user
+        if email:
+            # TODO cache
+            user = yield motor.Op(
+                UserModel.find_one, self.db, {"email": email})
+        else:
+            user = None
+        raise gen.Return(user)
+
 
 class ListHandler(BaseHandler):
 
+    def initialize(self, **kwargs):
+        super(ListHandler, self).initialize(**kwargs)
+        self.skip_permissions = False
+        self.needed_permissions = set(['read'])
+
     @gen.coroutine
     def get(self):
-        context = yield self.get_context()
-        self.render(self.template_name, context)
+        user = yield self.get_current_user_object()
+        if self.check_permission(user):
+            context = yield self.get_context()
+            self.render(self.template_name, context)
+        else:
+            self.render_permission_denied()
 
     @gen.coroutine
     def get_context(self):
