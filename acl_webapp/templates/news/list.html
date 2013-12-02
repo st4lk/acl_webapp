@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <p>Objects of list goes here</p>
+    {% for obj in object_list %}
+        <div>{{ obj.title }}</div>
+        <div>{{ obj.content }}</div>
+        <div>{{ obj.author }}</div>
+        {% for comment in obj.comments %}
+            <div>{{ comment.author }}</div>
+            <div>{{ comment.content }}</div>
+        {% endfor %}
+    {% endfor %}
+{% endblock content %}

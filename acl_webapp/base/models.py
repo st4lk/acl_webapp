@@ -104,7 +104,7 @@ class BaseModel(Model):
                 callback(*args, **kwargs)
             else:
                 for i in xrange(len(result)):
-                    result[i] = cls(**result[i])
+                    result[i] = cls(result[i])
                 callback(result, error)
         cursor.to_list(cls.find_list_len(), callback=wrap_callback)
 
