@@ -88,7 +88,7 @@ class NewsCreateTest(NewsBaseTest):
         self.assert200(resp)
         self.assertTrue('Publish' in resp.body)
 
-    def test_post_is_saved(self):
+    def test_news_are_saved(self):
         self.register_user(self.valid_email, '123123')
         self.set_user_permissions(self.valid_email, ['read', 'write'])
         resp = self.post_with_xsrf(
@@ -102,6 +102,18 @@ class NewsCreateTest(NewsBaseTest):
         self.assertTrue(news is not None)
         resp = self.get(self.reverse_url('news_list'))
         self.assertTrue(self.valid_title in resp.body)
+
+    def test_bad_form_data(self):
+        self.register_user(self.valid_email, '123123')
+        self.set_user_permissions(self.valid_email, ['read', 'write'])
+        resp = self.post_with_xsrf(
+            data={},
+            url_name="news_create"
+        )
+        self.assert200(resp)
+        news = self.db_find_one('news', {"title": self.valid_title})
+        self.assertTrue(news is None)
+        self.assertTrue('Publish' in resp.body)
 
 
 class NewsDetailTest(NewsBaseTest):
