@@ -13,6 +13,7 @@ TEST_MODULES = [
     'tests.register_test',
     'tests.login_test',
     'tests.logout_test',
+    'tests.news_test',
 ]
 
 

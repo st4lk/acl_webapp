@@ -73,6 +73,7 @@ class BaseTest(AsyncHTTPTestCase, LogTrapTestCase, TestClient):
         @gen.engine
         def async_op():
             yield motor.Op(db.accounts.remove)
+            yield motor.Op(db.news.remove)
             self.stop()
         async_op()
         self.wait()
