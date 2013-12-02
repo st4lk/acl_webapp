@@ -3,7 +3,7 @@ import logging
 from tornado import gen
 from tornado import web
 import motor
-from base.handlers import ListHandler, CreateHandler
+from base.handlers import ListHandler, CreateHandler, DetailHandler
 from .models import NewsModel
 from .forms import NewsForm
 
@@ -27,13 +27,13 @@ class NewsCreateHandler(CreateHandler):
 
     @web.authenticated
     @gen.coroutine
-    def get(self):
-        yield super(NewsCreateHandler, self).get()
+    def get(self, *args, **kwargs):
+        yield super(NewsCreateHandler, self).get(*args, **kwargs)
 
     @web.authenticated
     @gen.coroutine
-    def post(self):
-        yield super(NewsCreateHandler, self).post()
+    def post(self, *args, **kwargs):
+        yield super(NewsCreateHandler, self).post(*args, **kwargs)
 
     @gen.coroutine
     def form_valid(self, form):
@@ -41,3 +41,10 @@ class NewsCreateHandler(CreateHandler):
         obj.author = self.current_user
         yield motor.Op(obj.insert, self.db)
         raise gen.Return(True)
+
+
+class NewsDetailHandler(DetailHandler):
+    def initialize(self, **kwargs):
+        super(NewsDetailHandler, self).initialize(**kwargs)
+        self.template_name = "news/detail.html"
+        self.model = NewsModel

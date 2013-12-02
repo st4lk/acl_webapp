@@ -10,7 +10,7 @@
     </div>
     {% endif %}
     {% for obj in object_list %}
-        <h3>{{ obj.title }}</h3>
+        <h3><a href="{{ reverse_url('news_detail', obj._id) }}">{{ obj.title }}</a></h3>
         <p>{{ obj.content }}</p>
         <p>Author: {{ obj.author }}</p>
     {% endfor %}

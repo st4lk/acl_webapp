@@ -1,5 +1,6 @@
 import logging
 import json
+from bson.objectid import ObjectId
 import tornado.web
 from tornado import gen
 import motor
@@ -18,6 +19,7 @@ class BaseHandler(tornado.web.RequestHandler):
         super(BaseHandler, self).initialize(**kwargs)
         self.db = self.settings['db']
         self.current_user_object = None
+        self.template_name = None
 
     def render(self, template, context=None):
         """Renders template using jinja2"""
@@ -76,7 +78,7 @@ class PermissionBaseHandler(BaseHandler):
         self.user_permissions = []
 
     @gen.coroutine
-    def get(self):
+    def get(self, *args, **kwargs):
         permitted = yield self.user_is_permitted()
         if permitted:
             context = yield self.get_context()
@@ -172,7 +174,7 @@ class CreateHandler(PermissionBaseHandler):
         self.success_url = None
 
     @gen.coroutine
-    def post(self):
+    def post(self, *args, **kwargs):
         permitted = yield self.user_is_permitted()
         if permitted:
             form = self.post_form()
@@ -231,6 +233,34 @@ class CreateHandler(PermissionBaseHandler):
     def get_context(self):
         context = {
             'form': self.get_form(),
+        }
+        self.add_context_permissions(context)
+        self.add_additional_context(context)
+        raise gen.Return(context)
+
+
+class DetailHandler(PermissionBaseHandler):
+    def initialize(self, **kwargs):
+        super(DetailHandler, self).initialize(**kwargs)
+        self.skip_permissions = False
+        self.needed_permissions = set(['read'])
+        self.model = None
+
+    def get_model(self):
+        return self.model
+
+    @gen.coroutine
+    def get_object(self):
+        model = self.get_model()
+        obj_id = ObjectId(self.path_kwargs['object_id'])
+        obj = yield motor.Op(model.find_one, self.db, {"_id": obj_id})
+        raise gen.Return(obj)
+
+    @gen.coroutine
+    def get_context(self):
+        obj = yield self.get_object()
+        context = {
+            'obj': obj,
         }
         self.add_context_permissions(context)
         self.add_additional_context(context)
