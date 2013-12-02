@@ -8,6 +8,10 @@ Run instructions
     
     python -m tests.runtests
 
+ - Run one
+
+    python -m tests.runtests tests.news_test.NewsCreateTest.test_post_is_saved
+
  - Run using tox
 
     pip install tox
