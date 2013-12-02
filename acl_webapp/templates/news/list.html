@@ -1,14 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <p>Objects of list goes here</p>
+    <h1>News:</h1>
+    {% if 'write' in permissions %}
+        <a href="#">Link to create</a>
+    {% endif %}
     {% for obj in object_list %}
-        <div>{{ obj.title }}</div>
-        <div>{{ obj.content }}</div>
-        <div>{{ obj.author }}</div>
-        {% for comment in obj.comments %}
-            <div>{{ comment.author }}</div>
-            <div>{{ comment.content }}</div>
-        {% endfor %}
+        {% if current_user == obj.author and 'write' in permissions %}
+            <a href="#">Link to edit</a>
+        {% endif %}
+        <h3>{{ obj.title }}</h3>
+        <p>{{ obj.content }}</p>
+        <p>Author: {{ obj.author }}</p>
     {% endfor %}
 {% endblock content %}

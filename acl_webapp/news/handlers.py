@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import logging
-from tornado import gen
-import motor
 
 from base.handlers import ListHandler
 from .models import NewsModel

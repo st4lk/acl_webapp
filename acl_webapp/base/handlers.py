@@ -21,10 +21,14 @@ def check_skip_permissions(func):
 class PermissionMixin(object):
 
     @check_skip_permissions
-    def check_permission(self, user):
+    def check_permission(self, user, needed_permissions=None):
+        needed_permissions = needed_permissions or self.needed_permissions
         if not user:
             return False
-        return user.has_permission(self.model, self.needed_permissions)
+        return user.has_permission(self.model, needed_permissions)
+
+    def set_user_permissions(self, user):
+        self.user_permissions = user.get_permissions(self.model)
 
     def get_permission_denied_template(self):
         template_name = getattr(self, 'permission_denied_template', None)
@@ -49,6 +53,8 @@ class BaseHandler(tornado.web.RequestHandler, PermissionMixin):
         super(BaseHandler, self).initialize(**kwargs)
         self.db = self.settings['db']
         self.skip_permissions = True
+        self.user_permissions = []
+        self.current_user_object = None
 
     def render(self, template, context=None):
         """Renders template using jinja2"""
@@ -89,6 +95,7 @@ class BaseHandler(tornado.web.RequestHandler, PermissionMixin):
                 UserModel.find_one, self.db, {"email": email})
         else:
             user = None
+        self.current_user_object = user
         raise gen.Return(user)
 
 
@@ -101,21 +108,30 @@ class ListHandler(BaseHandler):
 
     @gen.coroutine
     def get(self):
-        user = yield self.get_current_user_object()
+        user = self.current_user_object
+        if user is None:
+            user = yield self.get_current_user_object()
         if self.check_permission(user):
+            self.set_user_permissions(user)
             context = yield self.get_context()
             self.render(self.template_name, context)
         else:
             self.render_permission_denied()
 
+    def get_additional_context(self):
+        return {}
+
     @gen.coroutine
     def get_context(self):
         page = self.get_argument('page', 1)
         object_list = yield self.get_object_list(page)
-        raise gen.Return({
+        context = {
             'object_list': object_list,
             'page': page,
-        })
+            'permissions': self.user_permissions
+        }
+        context.update(self.get_additional_context())
+        raise gen.Return(context)
 
     def get_model(self):
         return self.model

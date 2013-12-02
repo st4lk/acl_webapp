@@ -44,9 +44,12 @@ class UserModel(BaseModel):
     def set_password(self, plaintext):
         self.password = make_password(plaintext)
 
-    def has_permission(self, model, needed_permissions):
+    def get_permissions(self, model):
         model_name = model.get_model_name()
-        user_permissions = set(self.permissions.get(model_name, []))
+        return self.permissions.get(model_name, [])
+
+    def has_permission(self, model, needed_permissions):
+        user_permissions = set(self.get_permissions(model))
         return not (needed_permissions - user_permissions)
 
     def insert(self, *args, **kwargs):
