@@ -1,5 +1,31 @@
 {% extends "base.html" %}
 
 {% block content %}
-    Hello, world! {{ obj }}
+    {% if current_user %}
+        <h3>Hello!</h3>
+        <p>Your email is {{ current_user}}</p>
+        <p>You can check permissions system by viewing <a href="{{ reverse_url('news_list') }}"> news list</a> page</p>
+        <p>By default, users have only 'read' permissions for news. So user can see news list and news detail.</p>
+        <p>If user has permission to write, then he will see a 'Create new post' button at <a href="{{ reverse_url('news_list') }}"> news list</a> page.</p>
+        <p>If user has permission to delete, then he will see a 'Delete' button at news detail page. In addition to delete permission, he must be an author of this post to be able to delete it.</p>
+        <p>Permissions can be mondified from mongodb shell.</p>
+        <p>Example for model 'news' and current user (with email = '{{ current_user }}''):</p>
+        <div class="code_mongo">
+            <p>use acl_app</p>
+            <p>usr = db.accounts.findOne({_id: "{{current_user}}"})</p>
+            <p>// look his current permissions</p>
+            <p>usr.permissions</p>
+            <p>// set no permissions</p>
+            <p>usr.permissions['news'] = []</p>
+            <p>db.accounts.save(usr)</p>
+            <p>// set only read permissions</p>
+            <p>usr.permissions['news'] = ['read']</p>
+            <p>db.accounts.save(usr)</p>
+            <p>// set read, write, delete permissions</p>
+            <p>usr.permissions['news'] = ['read', 'write', 'delete']</p>
+            <p>db.accounts.save(usr)</p>
+        </div>
+    {% else %}
+        <h3>Please, login or register.</h3>
+    {% endif %}
 {% endblock content %}

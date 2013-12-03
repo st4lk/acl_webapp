@@ -20,3 +20,12 @@
 .reg_post_anim {
     margin-right: 10px;
 }
+
+.code_mongo {
+    margin-left: 30px;
+    color: #2916FD;
+}
+
+.code_mongo p {
+    margin: 0px;
+}
