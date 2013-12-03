@@ -13,5 +13,13 @@
         <h3><a href="{{ reverse_url('news_detail', obj._id) }}">{{ obj.title }}</a></h3>
         <p>{{ obj.content }}</p>
         <p>Author: {{ obj.author }}</p>
+    {% else %}
+        <p>Currently there are no news created.<p>
+        {% if 'write' in permissions %}
+            <p>You can create a new one <a href="{{ reverse_url('news_create') }}">here</a>.</p>
+        {% else %}
+            <p>To create a new one, you need a 'write' permission for model 'news'.</p>
+            <p>Look <a href="{{ reverse_url('home') }}">home page</a> for details how to change permissions.<p>
+        {% endif %}
     {% endfor %}
 {% endblock content %}
