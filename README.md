@@ -84,3 +84,25 @@ Example, where to be able to delete 'news' object user must be also an author of
                 yield self.get_object()
             news = self.object
             raise gen.Return(news.author == self.current_user)
+
+UserModel has default permissions, contained in `DEFAULT_PERMISSIONS`.
+When user is created, he has those default permissions.
+
+#### Shortcut to change permissions from mongodb shell:
+
+Set permissions to user with email="email@email.com" for model with name 'news'.
+
+    use acl_app
+    usr = db.accounts.findOne({_id: "email@email.com"})
+    // look his current permissions
+    usr.permissions
+    // set no permissions
+    usr.permissions['news'] = []
+    db.accounts.save(usr)
+    // set only read permissions
+    usr.permissions['news'] = ['read']
+    db.accounts.save(usr)
+    // set read, write, delete permissions
+    usr.permissions['news'] = ['read', 'write', 'delete']
+    db.accounts.save(usr)
+
