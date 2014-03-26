@@ -9,7 +9,7 @@
         <p>If user has permission to write, then he will see a 'Create new post' button at <a href="{{ reverse_url('news_list') }}"> news list</a> page.</p>
         <p>If user has permission to delete, then he will see a 'Delete' button at news detail page. In addition to delete permission, he must be an author of this post to be able to delete it.</p>
         <p>Permissions can be mondified from mongodb shell.</p>
-        <p>Example for model 'news' and current user (with email = '{{ current_user }}''):</p>
+        <p>Example for model 'news' and current user (with email = '{{ current_user }}'):</p>
         <div class="code_mongo">
             <p>use acl_app</p>
             <p>usr = db.accounts.findOne({_id: "{{current_user}}"})</p>
