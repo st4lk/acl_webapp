@@ -59,8 +59,7 @@ class BaseHandler(tornado.web.RequestHandler):
         email = self.current_user
         if email:
             # TODO cache
-            user = yield motor.Op(
-                UserModel.find_one, self.db, {"email": email})
+            user = yield UserModel.find_one(self.db, {"email": email})
         else:
             user = None
         self.current_user_object = user
@@ -260,7 +259,7 @@ class DetailHandler(PermissionBaseHandler):
     def get_object(self):
         model = self.get_model()
         obj_id = ObjectId(self.path_kwargs['object_id'])
-        obj = yield motor.Op(model.find_one, self.db, {"_id": obj_id})
+        obj = yield model.find_one(self.db, {"_id": obj_id})
         self.object = obj
         raise gen.Return(obj)
 

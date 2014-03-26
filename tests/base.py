@@ -11,8 +11,7 @@ from acl_webapp.base.models import MAX_FIND_LIST_LEN
 from libs.http_test_client import TestClient
 
 
-MONGO_TEST_DB = 'acl_app_test'
-app = ACLApp(mongo_db=MONGO_TEST_DB)
+app = ACLApp(mongo_db="acl_app_test")
 reverse_url = app.reverse_url
 db = app.settings['db']
 

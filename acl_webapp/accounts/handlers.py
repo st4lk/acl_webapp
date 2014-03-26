@@ -91,7 +91,7 @@ class LoginHandler(BaseHandler, AuthMixin):
     def post(self):
         form = LoginForm(self.request.arguments)
         if form.validate():
-            usr = yield motor.Op(UserModel.find_one, self.db, {
+            usr = yield UserModel.find_one(self.db, {
                 "email": form.email.data})
             if usr:
                 if usr.check_password(form.password.data):

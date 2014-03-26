@@ -40,12 +40,13 @@ jinja_env = Environment(loader=FileSystemLoader(TEMPLATE_ROOT),
     **jinja_settings)
 
 # Mongo settings
-mongo_address = {
+MONGO_DB = {
     'host': '127.0.0.1',
     'port': 27017,
+    'db_name': "acl_app",
+    'reconnect_tries': 5,
+    'reconnect_timeout': 2,  # in seconds
 }
-MONGO_DB = "acl_app"
-
 
 # See PEP 391 and logconfig for formatting help.
 LOGGING = {

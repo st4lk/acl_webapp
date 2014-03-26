@@ -5,16 +5,14 @@ import tornado.httpserver
 import tornado.ioloop
 import tornado.web
 from tornado.options import options
-import motor
-from settings import settings, mongo_address, MONGO_DB
+from settings import settings, MONGO_DB
 from urls import url_patterns
+from utils.db import connect_mongo
 
 
 class ACLApp(tornado.web.Application):
     def __init__(self, *args, **kwargs):
-        mongo_addr = kwargs.get('mongo_addr', mongo_address)
-        mongo_db = kwargs.get('mongo_db', MONGO_DB)
-        db = motor.MotorClient(**mongo_addr).open_sync()[mongo_db]
+        db = connect_mongo(MONGO_DB, **kwargs)
         super(ACLApp, self).__init__(
             url_patterns, db=db, *args, **dict(settings, **kwargs))
 

@@ -25,7 +25,8 @@ class UserModel(BaseModel):
         self._id = value
 
     @classmethod
-    def process_params(cls, params):
+    def process_query(cls, params):
+        params = dict(params)
         if 'email' in params:
             params['_id'] = params.pop('email')
         return params

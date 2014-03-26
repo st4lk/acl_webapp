@@ -1,10 +1,14 @@
 import logging
+from datetime import timedelta
 from bson.objectid import ObjectId
-from tornado import gen
+from tornado import gen, ioloop
+import motor
 from schematics.models import Model
 from schematics.types import NumberType
+from pymongo.errors import ConnectionFailure
+from settings import MONGO_DB
 
-logger = logging.getLogger(__name__)
+l = logging.getLogger(__name__)
 MAX_FIND_LIST_LEN = 100
 
 
@@ -24,17 +28,32 @@ class BaseModel(Model):
 
     Same example, but using MyModel.find_one:
 
-        obj = yield motor.Op(MyModel.find_one, db, {"i": 3})
+        obj = yield MyModel.find_one(db, {"i": 3})
     """
 
     _id = NumberType(number_class=ObjectId, number_type="ObjectId")
 
+    def __init__(self, *args, **kwargs):
+        self.set_db(kwargs.pop('db', None))
+        super(BaseModel, self).__init__(*args, **kwargs)
+
+    @property
+    def db(self):
+        return getattr(self, '_db', None)
+
+    def set_db(self, db):
+        self._db = db
+
     @classmethod
-    def process_params(cls, params):
+    def process_query(cls, query):
         """
-        Params can be modified here before actual providing to database.
+        query can be modified here before actual providing to database.
         """
-        return params
+        return dict(query)
+
+    @property
+    def pk(self):
+        return self._id
 
     @classmethod
     def get_model_name(cls):
@@ -53,22 +72,28 @@ class BaseModel(Model):
         return getattr(cls, 'FIND_LIST_LEN', MAX_FIND_LIST_LEN)
 
     @classmethod
-    def find_one(cls, db, params, collection=None, model=True, callback=None):
-        def wrap_callback(*args, **kwargs):
-            result = args[0]
-            error = args[1]
-            if not model or error or not result:
-                callback(*args, **kwargs)
+    @gen.coroutine
+    def find_one(cls, db, query, collection=None, model=True):
+        result = None
+        query = cls.process_query(query)
+        for i in cls.reconnect_amount():
+            try:
+                result = yield motor.Op(
+                    db[cls.check_collection(collection)].find_one, query)
+            except ConnectionFailure as e:
+                exceed = yield cls.check_reconnect_tries_and_wait(i,
+                    'find_one')
+                if exceed:
+                    raise e
             else:
-                callback(cls(result), error)
-        params = cls.process_params(dict(params))
-        db[cls.check_collection(collection)].find_one(
-            params, callback=wrap_callback)
+                if model and result:
+                    result = cls.make_model(result, "find_one", db=db)
+                raise gen.Return(result)
 
     @classmethod
     def remove_entries(cls, db, params, collection=None, callback=None):
         c = cls.check_collection(collection)
-        params = cls.process_params(dict(params))
+        params = cls.process_query(params)
         db[c].remove(params, callback=callback)
 
     def save(self, db, collection=None, ser=None, callback=None, **kwargs):
@@ -122,3 +147,61 @@ class BaseModel(Model):
             if not rl(field, None):
                 fields.append(field)
         return fields
+
+    @classmethod
+    @gen.coroutine
+    def aggregate(cls, db, pipe_list, collection=None):
+        c = cls.check_collection(collection)
+        for i in cls.reconnect_amount():
+            try:
+                result = yield motor.Op(db[c].aggregate, pipe_list)
+            except ConnectionFailure as e:
+                exceed = yield cls.check_reconnect_tries_and_wait(i,
+                    'aggregate')
+                if exceed:
+                    raise e
+            else:
+                raise gen.Return(result)
+
+    @staticmethod
+    def reconnect_amount():
+        return xrange(MONGO_DB['reconnect_tries'] + 1)
+
+    @classmethod
+    @gen.coroutine
+    def check_reconnect_tries_and_wait(cls, reconnect_number, func_name):
+        if reconnect_number >= MONGO_DB['reconnect_tries']:
+            raise gen.Return(True)
+        else:
+            timeout = MONGO_DB['reconnect_timeout']
+            l.warning("ConnectionFailure #{0} in {1}.{2}. Waiting {3} seconds"
+                .format(
+                    reconnect_number + 1, cls.__name__, func_name, timeout))
+            io_loop = ioloop.IOLoop.instance()
+            yield gen.Task(io_loop.add_timeout, timedelta(seconds=timeout))
+
+    def get_data_for_save(self, ser):
+        data = ser or self.to_primitive()
+        if '_id' in data and data['_id'] is None:
+            del data['_id']
+        return data
+
+    @classmethod
+    def make_model(cls, data, method_name, field_names_set=None, db=None):
+        """
+        Create model instance from data (dict).
+        """
+        if field_names_set is None:
+            field_names_set = set(cls._fields.keys())
+        else:
+            if not isinstance(field_names_set, set):
+                field_names_set = set(field_names_set)
+        new_keys = set(data.keys()) - field_names_set
+        if new_keys:
+            l.warning(
+                "'{0}' has unhandled fields in DB: "
+                "'{1}'. {2} returned data: '{3}'"
+                .format(cls.__name__, new_keys, data, method_name))
+            for new_key in new_keys:
+                del data[new_key]
+        return cls(raw_data=data, db=db)
