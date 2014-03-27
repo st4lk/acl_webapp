@@ -261,15 +261,6 @@ class BaseModel(Model):
                 raise gen.Return(result)
 
     @classmethod
-    def get_fields(cls, role):
-        rl = cls._options.roles[role]
-        fields = []
-        for field in cls._fields:
-            if not rl(field, None):
-                fields.append(field)
-        return fields
-
-    @classmethod
     @gen.coroutine
     def aggregate(cls, db, pipe_list, collection=None):
         c = cls.check_collection(collection)
