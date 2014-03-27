@@ -112,10 +112,41 @@ class BaseModel(Model):
             else:
                 return
 
-    def save(self, db, collection=None, ser=None, callback=None, **kwargs):
+    @gen.coroutine
+    def remove(self, db, collection=None):
+        """
+        Removes current instance from database.
+        Example:
+            obj = yield ExampleModel.find_one(self.db, {"last_name": "Sara"})
+            yield obj.remove(self.db)
+        """
+        _id = self.to_primitive()['_id']
+        yield self.remove_entries(db, {"_id": _id}, collection)
+
+    @gen.coroutine
+    def save(self, db=None, collection=None, ser=None):
+        """
+        If object has _id, then object will be created or fully rewritten.
+        If not, object will be inserted and _id will be assigned.
+        Example:
+            obj = ExampleModel({"first_name": "Vasya"})
+            yield obj.save(self.db)
+        """
+        db = db or self.db
         c = self.check_collection(collection)
-        data = ser or self.to_primitive()
-        db[c].save(data, callback=callback, **kwargs)
+        data = self.get_data_for_save(ser)
+        result = None
+        for i in self.reconnect_amount():
+            try:
+                result = yield motor.Op(db[c].save, data)
+            except ConnectionFailure as e:
+                exceed = yield self.check_reconnect_tries_and_wait(i, 'save')
+                if exceed:
+                    raise e
+            else:
+                if result:
+                    self._id = result
+                return
 
     def insert(self, db, collection=None, ser=None, callback=None, **kwargs):
         c = self.check_collection(collection)
