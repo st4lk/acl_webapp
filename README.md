@@ -29,6 +29,17 @@ Installation
 
 - access http://127.0.0.1:8888/
 
+Tools used
+----------
+
+- [python](https://www.python.org/)
+- [tornado](http://www.tornadoweb.org/en/stable/)
+- [mongodb](http://www.mongodb.org/)
+- [motor](http://motor.readthedocs.org/en/stable/)
+- [schematics](http://schematics.readthedocs.org/en/latest/)
+- [Jinja2](http://jinja.pocoo.org/)
+- [WTForms](http://wtforms.readthedocs.org/en/latest/)
+
 
 Description
 -----------
