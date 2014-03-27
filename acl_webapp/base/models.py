@@ -223,17 +223,42 @@ class BaseModel(Model):
                 raise gen.Return(result)
 
     @classmethod
-    def find(cls, cursor, model=True, callback=None):
-        def wrap_callback(*args, **kwargs):
-            result = args[0]
-            error = args[1]
-            if not model or error or not result:
-                callback(*args, **kwargs)
+    def get_cursor(cls, db, query, collection=None, fields={}):
+        c = cls.check_collection(collection)
+        query = cls.process_query(query)
+        return db[c].find(query, fields) if fields else db[c].find(query)
+
+    @classmethod
+    @gen.coroutine
+    def find(cls, cursor, model=True, list_len=None):
+        """
+        Returns a list of found documents.
+
+        :arg cursor: motor cursor for find
+        :arg model: if True, then construct model instance for each document.
+            Otherwise, just leave them as list of dicts.
+        :arg list_len: list of documents to be returned.
+
+        Example:
+            cursor = ExampleModel.get_cursor(self.db, {"first_name": "Hello"})
+            objects = yield ExampleModel.find(cursor)
+        """
+        result = None
+        list_len = list_len or cls.find_list_len() or MAX_FIND_LIST_LEN
+        for i in cls.reconnect_amount():
+            try:
+                result = yield motor.Op(cursor.to_list, list_len)
+            except ConnectionFailure as e:
+                exceed = yield cls.check_reconnect_tries_and_wait(i, 'find')
+                if exceed:
+                    raise e
             else:
-                for i in xrange(len(result)):
-                    result[i] = cls(result[i])
-                callback(result, error)
-        cursor.to_list(cls.find_list_len(), callback=wrap_callback)
+                if model:
+                    field_names_set = set(cls._fields.keys())
+                    for i in xrange(len(result)):
+                        result[i] = cls.make_model(
+                            result[i], "find", field_names_set)
+                raise gen.Return(result)
 
     @classmethod
     def get_fields(cls, role):

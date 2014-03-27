@@ -3,7 +3,6 @@ import json
 from bson.objectid import ObjectId
 import tornado.web
 from tornado import gen
-import motor
 from pymongo.errors import DuplicateKeyError
 from settings import jinja_env
 from .decorators import check_skip_permissions
@@ -161,11 +160,11 @@ class ListHandler(PermissionBaseHandler):
     @gen.coroutine
     def get_object_list(self, page=1):
         model = self.get_model()
-        cursor = self.db[model.get_collection()].find(
-            self.get_find_filter(), **self.get_find_params())
+        cursor = model.get_cursor(self.db, self.get_find_filter(),
+            **self.get_find_params())
         if page > 1:
             cursor.skip((page-1) * model.find_list_len())
-        object_list = yield motor.Op(model.find, cursor)
+        object_list = yield model.find(cursor)
         raise gen.Return(object_list)
 
 
