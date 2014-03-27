@@ -91,10 +91,26 @@ class BaseModel(Model):
                 raise gen.Return(result)
 
     @classmethod
-    def remove_entries(cls, db, params, collection=None, callback=None):
+    @gen.coroutine
+    def remove_entries(cls, db, query, collection=None):
+        """
+        Removes documents by given query.
+        Example:
+            obj = yield ExampleModel.remove_entries(
+                self.db, {"first_name": "Hello"})
+        """
         c = cls.check_collection(collection)
-        params = cls.process_query(params)
-        db[c].remove(params, callback=callback)
+        query = cls.process_query(query)
+        for i in cls.reconnect_amount():
+            try:
+                yield motor.Op(db[c].remove, query)
+            except ConnectionFailure as e:
+                exceed = yield cls.check_reconnect_tries_and_wait(i,
+                    'remove_entries')
+                if exceed:
+                    raise e
+            else:
+                return
 
     def save(self, db, collection=None, ser=None, callback=None, **kwargs):
         c = self.check_collection(collection)

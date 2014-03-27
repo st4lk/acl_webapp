@@ -286,8 +286,7 @@ class DeleteHandler(DetailHandler):
     @gen.coroutine
     def delete_obj(self):
         obj_id = ObjectId(self.path_kwargs['object_id'])
-        yield motor.Op(
-            self.get_model().remove_entries, self.db, {'_id': obj_id})
+        yield self.get_model().remove_entries(self.db, {'_id': obj_id})
 
     def get_success_url(self):
         return self.success_url
