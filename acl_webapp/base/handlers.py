@@ -197,7 +197,7 @@ class CreateHandler(PermissionBaseHandler):
         obj = form.get_object()
         result = False
         try:
-            yield motor.Op(obj.insert, self.db)
+            yield obj.insert(self.db)
             result = True
         except DuplicateKeyError:
             form.set_nonfield_error("duplicate_error")

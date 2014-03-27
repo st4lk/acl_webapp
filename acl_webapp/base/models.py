@@ -148,30 +148,79 @@ class BaseModel(Model):
                     self._id = result
                 return
 
-    def insert(self, db, collection=None, ser=None, callback=None, **kwargs):
+    @gen.coroutine
+    def insert(self, db=None, collection=None, ser=None, **kwargs):
+        """
+        If object has _id, then object will be inserted with given _id.
+        If object with such _id is already in database, then
+        pymongo.errors.DuplicateKeyError will be raised.
+        If object has no _id, then object will be inserted and _id will be
+        assigned.
+
+        Example:
+            obj = ExampleModel({"first_name": "Vasya"})
+            yield obj.insert()
+        """
+        db = db or self.db
         c = self.check_collection(collection)
-        data = ser or self.to_primitive()
-        if '_id' in data and data['_id'] is None:
-            del data['_id']
-        db[c].insert(data, callback=callback, **kwargs)
+        data = self.get_data_for_save(ser)
+        for i in self.reconnect_amount():
+            try:
+                result = yield motor.Op(db[c].insert, data, **kwargs)
+            except ConnectionFailure as e:
+                exceed = yield self.check_reconnect_tries_and_wait(i, 'insert')
+                if exceed:
+                    raise e
+            else:
+                if result:
+                    self._id = result
+                return
 
     @gen.coroutine
-    def update(self, db, collection=None, callback=None):
-        # TODO
-        # test it. Earlier it was used with gen.engine
+    def update(self, db=None, query=None, collection=None, update=None, ser=None,
+            upsert=False, multi=False):
+        """
+        Updates the object. If object has _id, then try to update the object.
+        If object with given _id is not found in database, or object doesn't
+        have _id field, then save it and assign generated _id.
+        Difference from save:
+            Suppose such object in database:
+                {"_id": 1, "foo": "egg1", "bar": "egg2"}
+            We want to save following data:
+                {"_id": 1, "foo": "egg3"}
+            If we'll run save, then in database will be following data:
+                {"_id": 1, "foo": "egg3"} # "bar": "egg2" is removed
+            But if we'll run update, then existing fields will be kept:
+                {"_id": 1, "foo": "egg3", "bar": "egg2"}
+        Example:
+            obj = yield ExampleModel.find_one(self.db, {"first_name": "Foo"})
+            obj.last_name = "Bar"
+            yield obj.update(self.db)
+        """
+        db = db or self.db
+        # TODO: refactor, update and ser arguments are very similar, left only one
         c = self.check_collection(collection)
-        data = self.to_primitive()
-        if '_id' not in data:
-            self.save(db, c, ser=data, callback=callback)
+        if update is None:
+            data = self.get_data_for_save(ser)
         else:
-            _id = data.pop("_id")
-            (r, e), _ = yield gen.Task(db[c].update,
-                {"_id": _id}, {"$set": data})
-            if e or r['updatedExisting']:
-                callback((r, e), _)
+            data = update
+        if not query:
+            _id = self.pk or data.pop("_id")
+            query = {"_id": _id}
+        if update is None:
+            data = {"$set": data}
+        for i in self.reconnect_amount():
+            try:
+                result = yield motor.Op(db[c].update,
+                    query, data, upsert=upsert, multi=multi)
+            except ConnectionFailure as e:
+                exceed = yield self.check_reconnect_tries_and_wait(i,
+                    'update')
+                if exceed:
+                    raise e
             else:
-                data['_id'] = _id
-                self.save(db, c, ser=data, callback=callback)
+                l.debug("Update result: {0}".format(result))
+                raise gen.Return(result)
 
     @classmethod
     def find(cls, cursor, model=True, callback=None):

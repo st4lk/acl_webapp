@@ -1,8 +1,6 @@
 import logging
 from pymongo.errors import DuplicateKeyError
 from tornado import gen
-import motor
-
 from base.handlers import BaseHandler
 from .forms import RegistrationForm, LoginForm
 from .models import UserModel
@@ -55,7 +53,7 @@ class RegisterHandler(BaseHandler, AuthMixin):
             usr = form.get_object()
             usr.set_password(usr.password)
             try:
-                yield motor.Op(usr.insert, self.db)
+                yield usr.insert(self.db)
             except DuplicateKeyError:
                 form.set_field_error('email', 'email_occupied')
             else:

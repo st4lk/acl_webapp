@@ -2,7 +2,6 @@
 import logging
 from tornado import gen
 from tornado import web
-import motor
 from base.handlers import ListHandler, CreateHandler, DetailHandler,\
     DeleteHandler
 from .models import NewsModel
@@ -40,7 +39,7 @@ class NewsCreateHandler(CreateHandler):
     def form_valid(self, form):
         obj = form.get_object()
         obj.author = self.current_user
-        yield motor.Op(obj.insert, self.db)
+        yield obj.insert(self.db)
         raise gen.Return(True)
 
 
